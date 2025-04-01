@@ -1,0 +1,15 @@
+{
+  "plugins": [
+    "expo-asset"
+  ],
+  "extra": {
+    "eas": {
+      "projectId": "c6b3ba4a-d465-4d01-ad6e-cdff3d71bc19"
+    }
+  },
+  "expo": {
+    "android": {
+      "package": "com.juancho33.recibosprolisto"
+    }
+  }
+}
