@@ -73,3 +73,33 @@ export function pdfBytes(r, logo) {
   file+='trailer\n<< /Size '+(objects.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF\n';
   return Uint8Array.from(file,c=>c.charCodeAt(0));
 }
+
+export function contrastWithWhite(color) {
+  const rgb=color.map(value=>{
+    const s=value/255;
+    return s<=.04045?s/12.92:((s+.055)/1.055)**2.4;
+  });
+  return 1.05/(.05+.2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2]);
+}
+export function pickBrand(pixels) {
+  const buckets=new Map();
+  for(let i=0;i+3<pixels.length;i+=4) {
+    const r=pixels[i],g=pixels[i+1],b=pixels[i+2],alpha=pixels[i+3];
+    if(alpha<120 || Math.min(r,g,b)>232) continue;
+    const key=[r,g,b].map(v=>Math.floor(v/28)).join(',');
+    const item=buckets.get(key)||{n:0,r:0,g:0,b:0};
+    item.n++; item.r+=r; item.g+=g; item.b+=b;
+    buckets.set(key,item);
+  }
+  let best=null;
+  for(const item of buckets.values()) {
+    const color=[item.r,item.g,item.b].map(v=>Math.round(v/item.n));
+    const spread=Math.max(...color)-Math.min(...color);
+    const score=item.n*(1+spread/115);
+    if(!best||score>best.score) best={score,color};
+  }
+  if(!best) return null;
+  let color=best.color;
+  while(contrastWithWhite(color)<4.5) color=color.map(v=>Math.floor(v*.94));
+  return color;
+}
