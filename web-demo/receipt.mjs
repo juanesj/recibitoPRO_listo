@@ -27,16 +27,27 @@ export function makeReceipt(input) {
   return r;
 }
 const literal = value => String(value).normalize('NFC').replace(/[^\x20-\x7e\xa0-\xff]/g,'?').replace(/[\\()]/g,'\\$&');
-export function pdfBytes(r) {
+export function validateLogoFile(file) {
+  const types = ['image/png','image/jpeg','image/webp'];
+  if (!file || !types.includes(file.type)) throw new Error('Elige una imagen PNG, JPG o WebP.');
+  if (!(file.size > 0 && file.size <= 5 * 1024 * 1024)) throw new Error('El logo debe pesar como máximo 5 MB.');
+}
+export function pdfBytes(r, logo) {
   const line = (x,y,size,value,bold=false) =>
     'BT /'+(bold?'F2':'F1')+' '+size+' Tf '+x+' '+y+' Td ('+literal(value)+') Tj ET\n';
   let stream = '0.08 0.14 0.13 rg\n';
+  if (logo) {
+    const scale=Math.min(100/logo.width,58/logo.height);
+    const w=Math.round(scale*logo.width), h=Math.round(scale*logo.height);
+    stream+='q '+w+' 0 0 '+h+' '+(560-w)+' '+(752-h)+' cm /Logo Do Q\n';
+  }
   stream += line(52,738,24,'Recibitos PRO',true)+line(52,709,14,'Recibo de demostración');
   stream += line(52,677,11,r.number+'   |   '+r.day)+line(52,615,30,r.total,true);
   stream += '0.75 0.81 0.77 RG 52 591 m 560 591 l S\n';
   let y=562;
   for(const k of ['client','vehicle','plate','vin','seller','method']) {
-    stream+=line(52,y,10,labels[k],true)+line(180,y,12,r[k]||'No indicado'); y-=32;
+    const value=r[k]||'No indicado';
+    stream+=line(52,y,10,labels[k],true)+line(180,y,Math.min(12,380/value.length),value); y-=32;
   }
   stream+=line(52,350,10,'Observaciones',true);
   const note = r.notes || 'Sin observaciones.';
@@ -45,11 +56,15 @@ export function pdfBytes(r) {
   const objects=[
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> '+(logo?'/XObject << /Logo 7 0 R >> ':'')+'>> /Contents 6 0 R >>',
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>',
     '<< /Length '+stream.length+' >>\nstream\n'+stream+'endstream'
   ];
+  if (logo) {
+    const hex=Array.from(logo.bytes,b=>b.toString(16).padStart(2,'0')).join('')+'>';
+    objects.push('<< /Type /XObject /Subtype /Image /Width '+logo.width+' /Height '+logo.height+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length '+hex.length+' >>\nstream\n'+hex+'\nendstream');
+  }
   let file='%PDF-1.4\n'; const offsets=[];
   objects.forEach((obj,i)=>{offsets.push(file.length); file+=(i+1)+' 0 obj\n'+obj+'\nendobj\n';});
   const xref=file.length;
