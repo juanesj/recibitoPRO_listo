@@ -1,7 +1,8 @@
-import { labels, makeReceipt, pdfBytes, sample, formatAmount, validateLogoFile, pickBrand } from './receipt.mjs';
+import { labels, makeReceipt, pdfBytes, sample, formatAmount, validateLogoFile, pickBrand } from './receipt.mjs?v=recibo2';
 const form=document.querySelector('#receipt-form');
 const result=document.querySelector('#result');
-const details=document.querySelector('#details');
+const paymentDetails=document.querySelector('#payment-details');
+const vehicleDetails=document.querySelector('#vehicle-details');
 const error=document.querySelector('#error');
 const status=document.querySelector('#status');
 let current, brandLogo;
@@ -109,13 +110,17 @@ form.addEventListener('submit',event=>{
   catch (e) { current=undefined; result.hidden=true; error.textContent=e.message; error.hidden=false; return; }
   document.querySelector('#number').textContent=current.number;
   document.querySelector('#total').textContent=current.total;
-  details.replaceChildren();
-  for(const [key,label] of Object.entries(labels)) {
-    if(!current[key]) continue;
-    const row=document.createElement('div');
-    const term=document.createElement('dt'); term.textContent=label;
-    const value=document.createElement('dd'); value.textContent=current[key];
-    row.append(term,value); details.append(row);
+  document.querySelector('#merchant').textContent=current.seller;
+  document.querySelector('#date-issued').textContent='Fecha: '+current.day;
+  document.querySelector('#receipt-notes').textContent=current.notes||'Sin observaciones.';
+  for(const [list,keys] of [[paymentDetails,['client','method','concept','reference']],[vehicleDetails,['vehicle','plate','vin']]]) {
+    list.replaceChildren();
+    for(const key of keys) {
+      const row=document.createElement('div');
+      const term=document.createElement('dt'); term.textContent=labels[key];
+      const value=document.createElement('dd'); value.textContent=current[key]||'No indicado';
+      row.append(term,value); list.append(row);
+    }
   }
   result.hidden=false;
   document.querySelector('#result-title').focus();
