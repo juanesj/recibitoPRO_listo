@@ -58,3 +58,20 @@ body{background:var(--logo-muted,var(--bg))}
 .receipt dl{margin:.2rem 0 .85rem}
 .receipt-notes{background:var(--logo-muted,#f1f6f1);border-radius:.55rem;padding:.55rem .65rem}
 .receipt-notes p{margin:0;font-size:.85rem;overflow-wrap:anywhere}
+.receipt-fields{margin:0;padding:.6rem;min-width:0;border:1px solid var(--logo-edge,var(--edge));border-radius:.6rem;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+.receipt-fields legend{padding:0 .35rem;color:var(--brand);font-size:.79rem;font-weight:750}
+.balance-hint{color:var(--brand);font-size:.77rem;margin:0}
+.payment-totals{margin:.5rem 0 0!important}
+.payment-totals div{border-color:#ffffff55}.payment-totals dt,.payment-totals dd{color:#fff}.payment-totals dd{text-align:right;font-weight:700}
+.signature-box{border:1px solid var(--logo-edge,var(--edge));border-radius:.6rem;padding:.6rem}
+#signature-pad{display:block;width:100%;height:auto;cursor:crosshair;background:#fff;border:1px dashed #899c92;border-radius:.4rem;touch-action:none}
+.signature-box p{margin:.15rem 0 .4rem}.signature-box button{margin-top:.4rem}
+.receipt-signature{margin:.6rem 0}.receipt-signature img{display:block;width:min(160px,100%);border-bottom:1px solid var(--edge)}
+.receipt-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:.4rem;margin:.45rem 0}
+.receipt-feedback{font-size:.8rem;color:var(--brand);margin:.3rem 0}.receipt-feedback:empty{display:none}
+.session-history{margin-top:1rem}
+.session-history p{font-size:.82rem;color:var(--soft)}
+.session-history ol{list-style:none;padding:0;margin:0}
+.session-history li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem;border-top:1px solid var(--edge);padding:.4rem 0}
+button:disabled{opacity:.55;cursor:default}
+@media(max-width:460px){.receipt-fields{grid-template-columns:minmax(0,1fr)}}
