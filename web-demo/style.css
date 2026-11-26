@@ -47,3 +47,14 @@ body{background:var(--logo-muted,var(--bg))}
 .logo-thumb,.card,.top{border-color:var(--logo-edge,var(--edge))}
 .primary:hover{background:var(--logo-hover,#103b30)}
 :focus-visible{outline-color:var(--logo-focus,#17704d)}
+.receipt{border-top:5px solid var(--brand)}
+.receipt-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:.8rem;margin:1rem 0}
+.merchant{font-weight:800;font-size:clamp(1.15rem,4vw,1.65rem);margin:0;line-height:1.18;overflow-wrap:anywhere}
+.receipt-date{font-size:.78rem;color:var(--soft);margin:.35rem 0 0}
+.receipt-heading .receipt-logo{width:auto;max-width:clamp(78px,25vw,125px);height:59px;margin:0}
+.payment-hero{background:var(--brand);color:#fff;border-radius:.7rem;padding:.65rem .85rem;margin:0 0 .95rem}
+.payment-hero .amount-caption{color:#fff;font-weight:650}.payment-hero .total{margin:0}
+.detail-heading{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);margin:.4rem 0}
+.receipt dl{margin:.2rem 0 .85rem}
+.receipt-notes{background:var(--logo-muted,#f1f6f1);border-radius:.55rem;padding:.55rem .65rem}
+.receipt-notes p{margin:0;font-size:.85rem;overflow-wrap:anywhere}
