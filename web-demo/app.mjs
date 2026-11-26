@@ -1,4 +1,4 @@
-import { labels, makeReceipt, pdfBytes, sample, formatAmount, validateLogoFile } from './receipt.mjs';
+import { labels, makeReceipt, pdfBytes, sample, formatAmount, validateLogoFile, pickBrand } from './receipt.mjs';
 const form=document.querySelector('#receipt-form');
 const result=document.querySelector('#result');
 const details=document.querySelector('#details');
@@ -20,7 +20,24 @@ function refreshAmount() {
   try { amountHint.textContent=value?'Total: '+formatAmount(value):hintDefault; }
   catch { amountHint.textContent='Escribe un monto válido (por ejemplo, 1250.50).'; }
 }
+const root=document.documentElement;
+const cssColor=(c)=>'rgb('+c.join(', ')+')';
+const blend=(a,b,ratio)=>a.map((v,i)=>Math.round(v*(1-ratio)+b[i]*ratio));
+function applyPalette(color) {
+  const white=[255,255,255], black=[0,0,0];
+  const palette=color?{
+    '--brand':color, '--logo-hero':blend(color,black,.16),
+    '--logo-hover':blend(color,black,.22), '--logo-soft':blend(color,white,.91),
+    '--logo-muted':blend(color,white,.96), '--logo-edge':blend(color,white,.78),
+    '--logo-focus':color
+  }:null;
+  for(const key of ['--brand','--logo-hero','--logo-hover','--logo-soft','--logo-muted','--logo-edge','--logo-focus']) {
+    if(palette) root.style.setProperty(key,cssColor(palette[key]));
+    else root.style.removeProperty(key);
+  }
+}
 function drawBrand() {
+  applyPalette(brandLogo?.color);
   for (const element of [logoThumb,receiptLogo]) {
     element.hidden=!brandLogo;
     if (brandLogo) element.src=brandLogo.preview;
@@ -48,11 +65,18 @@ async function decodeLogo(file) {
     const resize=Math.min(1,640/Math.max(w,h));
     const canvas=document.createElement('canvas');
     canvas.width=Math.max(1,Math.round(w*resize)); canvas.height=Math.max(1,Math.round(h*resize));
+    const sampleCanvas=document.createElement('canvas');
+    const sampleScale=Math.min(1,56/Math.max(w,h));
+    sampleCanvas.width=Math.max(1,Math.round(w*sampleScale));
+    sampleCanvas.height=Math.max(1,Math.round(h*sampleScale));
+    const sampleCtx=sampleCanvas.getContext('2d',{willReadFrequently:true});
+    sampleCtx.drawImage(image,0,0,sampleCanvas.width,sampleCanvas.height);
+    const color=pickBrand(sampleCtx.getImageData(0,0,sampleCanvas.width,sampleCanvas.height).data);
     const ctx=canvas.getContext('2d');
     ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.drawImage(image,0,0,canvas.width,canvas.height);
     const preview=canvas.toDataURL('image/jpeg',0.88);
-    return {preview,width:canvas.width,height:canvas.height,
+    return {preview,color,width:canvas.width,height:canvas.height,
       bytes:Uint8Array.from(atob(preview.split(',')[1]),c=>c.charCodeAt(0))};
   } finally { URL.revokeObjectURL(url); }
 }
