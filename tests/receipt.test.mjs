@@ -22,3 +22,20 @@ test('crea un PDF con acentos y referencias válidas', async () => {
  const x = Number(b.toString('latin1').match(/startxref\s+(\d+)/)[1]);
  assert.equal(b.subarray(x,x+4).toString(), 'xref');
 });
+test('incorpora el logo en el PDF y lo coloca con su proporción', async () => {
+ const { pdfBytes } = await import('../web-demo/receipt.mjs');
+ const logo = {width:400,height:200,bytes:Uint8Array.of(255,216,255,217)};
+ const pdf = Buffer.from(pdfBytes(makeReceipt(sample),logo)).toString('latin1');
+ assert.match(pdf,/\/Logo 7 0 R/);
+ assert.match(pdf,/\/Width 400 \/Height 200/);
+ assert.match(pdf,/100 0 0 50 \d+ \d+ cm \/Logo Do/);
+ assert.match(pdf,/ffd8ffd9>/);
+ assert.doesNotMatch(Buffer.from(pdfBytes(makeReceipt(sample))).toString('latin1'), /\/Logo/);
+});
+test('valida el tipo y tamaño del archivo de logo', async () => {
+ const { validateLogoFile } = await import('../web-demo/receipt.mjs');
+ assert.doesNotThrow(() => validateLogoFile({ type:'image/png',size:18000 }));
+ for(const file of [{type:'image/svg+xml',size:99},{type:'image/png',size:0},{type:'image/jpeg',size:6*1024*1024}]) {
+   assert.throws(()=>validateLogoFile(file));
+ }
+});
