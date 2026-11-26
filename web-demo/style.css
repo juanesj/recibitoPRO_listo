@@ -27,3 +27,16 @@ footer{color:var(--soft);font-size:.8rem;margin:1rem 0 0}
 @media(max-width:800px){.layout{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:460px){main{padding:1rem}.card{padding:.9rem}.top{padding:.65rem .85rem}.badge{font-size:.6rem}.brand{font-size:1rem}.intro{margin:.8rem 0 1rem}}
 @media(max-width:350px){.fields{grid-template-columns:minmax(0,1fr)}}
+:root{--brand:#173e35;--ink:#142720;--bg:#edf3ee;--edge:#d0dfd5}
+.intro{padding:1.4rem 1.5rem;background:#153e34;color:#fff;border-radius:1.1rem}
+.intro .eyebrow,.intro p:last-child{color:#dbece1}
+.intro-tag{display:inline-block;margin-bottom:.55rem;padding:.2rem .5rem;border:1px solid #aed4bd;color:#e2f2e7;border-radius:1rem;font-size:.65rem;font-weight:750;letter-spacing:.1em}
+.logo-panel{display:grid;grid-template-columns:64px minmax(0,1fr);gap:.7rem;align-items:start;padding:.75rem;background:#f3f8f4;border:1px solid var(--edge);border-radius:.7rem;margin:0 0 .9rem}
+.logo-thumb{width:64px;height:64px;display:grid;place-items:center;background:#fff;border:1px dashed #9eb9aa;border-radius:.6rem;color:#476458;font-size:1.5rem}
+.logo-thumb img{width:100%;height:100%;object-fit:contain;border-radius:.6rem}
+.logo-control label{display:block;margin-bottom:.24rem}
+.logo-control input{font-size:.8rem;padding:.25rem;line-height:1.4}
+.logo-control input::file-selector-button{border:0;background:#e2eee5;border-radius:.35rem;padding:.42rem .45rem;margin-right:.35rem;color:#173e35;font:inherit;font-weight:650;cursor:pointer}
+small{display:block;font-size:.73rem;color:var(--soft);font-weight:500;margin:.16rem 0}
+.remove{margin-top:.28rem}.receipt-logo{width:auto;max-width:145px;height:67px;object-fit:contain;margin:0 0 .55rem}
+@media(max-width:460px){.intro{padding:1rem}.logo-panel{grid-template-columns:48px minmax(0,1fr)}.logo-thumb{width:48px;height:48px}}
