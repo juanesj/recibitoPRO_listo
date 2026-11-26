@@ -8,13 +8,13 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'self' data: blob:">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>Recibitos PRO Listo · Demo</title>
-  <link rel="stylesheet" href="style.css?v=recibo2">
-  <script type="module" src="app.mjs?v=recibo2"></script>
+  <link rel="stylesheet" href="style.css?v=pagos3">
+  <script type="module" src="app.mjs?v=pagos3"></script>
 </head>
 <body>
 <header class="top"><div class="brand"><img src="icon.svg" alt="" width="37" height="37"><strong>Recibitos PRO <span>Listo</span></strong></div><span class="badge">DEMO PÚBLICA</span></header>
 <main>
-  <section class="intro"><span class="intro-tag">ESTUDIO DE RECIBOS</span><p class="eyebrow">RECIBOS VEHICULARES</p><h1>Crea un recibo de prueba</h1>
+  <section class="intro"><span class="intro-tag">ESTUDIO DE RECIBOS</span><p class="eyebrow">RECIBOS DE PAGO</p><h1>Crea un recibo de prueba</h1>
   <p>Personaliza el recibo con tu logo, revisa los datos de ejemplo y descarga el PDF.</p></section>
   <div class="layout">
     <section class="card" aria-labelledby="form-title">
@@ -30,34 +30,61 @@
       </div>
       <form id="receipt-form" autocomplete="off" class="fields">
         <label>Cliente<input name="client" maxlength="50" required></label>
-        <label>Vendedor<input name="seller" maxlength="50" required></label>
-        <label>Vehículo<input name="vehicle" maxlength="50" required></label>
-        <label>Placa<input name="plate" maxlength="16"></label>
-        <label>VIN<input name="vin" maxlength="24"></label>
+        <label>Nombre de la empresa o vendedor<input name="seller" maxlength="50" required></label>
+        <label>Dirección de la empresa<input name="address" maxlength="84"></label>
+        <label>Teléfono de la empresa<input name="phone" type="tel" maxlength="30"></label>
+        <label>Formato de recibo<select name="kind"><option value="vehicular">Vehicular</option><option value="general">General</option></select></label>
+        <label>Tipo de pago<select name="paymentType"><option value="anticipo">Anticipo</option><option value="abono">Abono</option><option value="total">Pago total</option></select></label>
+        <fieldset id="vehicle-fields" class="receipt-fields wide">
+          <legend>Vehículo</legend>
+          <label>Vehículo<input name="vehicle" maxlength="50" required></label>
+          <label>Placa<input name="plate" maxlength="16"></label>
+          <label>VIN<input name="vin" maxlength="24"></label>
+        </fieldset>
         <label>Fecha<input name="date" type="date" required></label>
-        <label>Monto en quetzales<input name="amount" inputmode="decimal" maxlength="10" aria-describedby="amount-hint" required><small id="amount-hint" aria-live="polite">Usa punto o coma para los centavos.</small></label>
+        <label>Pago de hoy en quetzales<input name="amount" inputmode="decimal" maxlength="10" aria-describedby="amount-hint" required><small id="amount-hint" aria-live="polite">Usa punto o coma para los centavos.</small></label>
         <label>Forma de pago<select name="method" required><option>Transferencia</option><option>Efectivo</option><option>Tarjeta</option><option>Cheque</option></select></label>
+        <fieldset id="partial-fields" class="receipt-fields wide">
+          <legend>Detalle de la operación</legend>
+          <label>Total de la operación en quetzales<input name="saleTotal" inputmode="decimal" maxlength="10" required></label>
+          <label id="past-field">Abonos anteriores en quetzales<input name="previousPaid" inputmode="decimal" maxlength="10"></label>
+          <p id="balance-hint" class="wide balance-hint" role="status"></p>
+        </fieldset>
         <label>Concepto<input name="concept" maxlength="50"></label>
         <label>Referencia de pago<input name="reference" maxlength="50"></label>
         <label class="wide">Observaciones<textarea name="notes" rows="2" maxlength="160"></textarea></label>
+        <section class="signature-box wide" aria-labelledby="signature-label">
+          <h3 id="signature-label" class="detail-heading">Firma dibujada (opcional)</h3>
+          <p id="signature-note"><small>Dibuja con el dedo o el mouse. No es una firma digital certificada.</small></p>
+          <canvas id="signature-pad" width="560" height="160" aria-label="Área para dibujar la firma" aria-describedby="signature-note"></canvas>
+          <button id="clear-signature" class="quiet" type="button">Borrar firma</button>
+        </section>
         <button class="primary wide" type="submit">Generar vista previa</button>
         <p class="wide msg" id="error" role="alert" hidden></p>
       </form>
     </section>
     <section id="result" class="card receipt" aria-labelledby="result-title" hidden>
       <div class="section-head"><div><p class="eyebrow">02 / VISTA PREVIA</p><h2 id="result-title" tabindex="-1">Recibo de prueba</h2></div><span class="badge" id="number"></span></div>
-      <div class="receipt-heading"><div><p class="eyebrow">RECIBO DE PAGO</p><p id="merchant" class="merchant"></p><p id="date-issued" class="receipt-date"></p></div>
+      <div class="receipt-heading"><div><p class="eyebrow">RECIBO DE PAGO</p><p id="merchant" class="merchant"></p><p id="merchant-address" class="receipt-date" hidden></p><p id="merchant-phone" class="receipt-date" hidden></p><p id="date-issued" class="receipt-date"></p></div>
         <img id="receipt-logo" class="receipt-logo" alt="Logo del negocio en el recibo" hidden></div>
-      <div class="payment-hero"><p class="amount-caption">Monto recibido · GTQ</p><p class="total" id="total"></p></div>
+      <div class="payment-hero"><p class="amount-caption" id="payment-caption">Pago de hoy · GTQ</p><p class="total" id="total"></p><dl id="payment-totals" class="payment-totals"></dl></div>
       <h3 class="detail-heading">Datos del pago</h3><dl id="payment-details"></dl>
-      <h3 class="detail-heading">Datos del vehículo</h3><dl id="vehicle-details"></dl>
+      <div id="vehicle-preview"><h3 class="detail-heading">Datos del vehículo</h3><dl id="vehicle-details"></dl></div>
       <div class="receipt-notes"><h3 class="detail-heading">Observaciones</h3><p id="receipt-notes"></p></div>
+      <div id="signature-preview" class="receipt-signature" hidden><img id="signature-image" alt="Firma de prueba dibujada"><small>Firma capturada en pantalla · Sin certificado digital</small></div>
       <p class="watermark">DATOS FICTICIOS · NO VÁLIDO COMO COMPROBANTE</p>
       <button id="download" class="primary" type="button">Descargar PDF</button>
-      <p id="status" class="visually-hidden" role="status"></p>
+      <div class="receipt-actions"><button id="share" class="quiet" type="button">Compartir PDF</button>
+        <button id="save-receipt" class="quiet" type="button">Guardar en historial temporal</button></div>
+      <p id="status" class="receipt-feedback" role="status"></p>
     </section>
   </div>
-  <footer>Demo: usa datos ficticios. La página no guarda ni envía el logo o el recibo. El PDF descargado sí queda en tu dispositivo.</footer>
+  <section id="history" class="card session-history" hidden>
+    <h2>Historial temporal</h2>
+    <p>Estos recibos se pierden al cerrar o recargar la página. Descarga los que quieras conservar.</p>
+    <ol id="history-list"></ol>
+  </section>
+  <footer>Demo de prueba: usa datos ficticios. No se suben datos a un servidor. Solo se envía el archivo si tú confirmas que lo quieres compartir.</footer>
 </main>
 </body>
 </html>
