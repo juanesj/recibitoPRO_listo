@@ -63,3 +63,38 @@ test('recibo profesional separa el pago, el vehículo y una referencia opcional'
  for(const label of ['RECIBO DE PAGO','DATOS DEL VEHÍCULO','Reserva del vehículo','PRUEBA-5']) assert.ok(pdf.includes(label));
  assert.ok(pdf.includes('0.125 0.306 0.843 rg'));
 });
+test('abono calcula saldo y acumulado con centavos exactos', () => {
+ const r=makeReceipt({...sample,paymentType:'abono',saleTotal:'50000',previousPaid:'5000',amount:'2000'});
+ assert.deepEqual([r.total,r.payment.accumulated,r.payment.balance],['Q2,000.00','Q7,000.00','Q43,000.00']);
+ const text=Buffer.from(pdfBytes(r)).toString('latin1');
+ assert.ok(text.includes('Q43,000.00') && text.includes('Q7,000.00'));
+ const small=makeReceipt({...sample,paymentType:'abono',saleTotal:'1,00',previousPaid:'0.10',amount:'0.20'});
+ assert.deepEqual([small.payment.accumulated,small.payment.balance],['Q0.30','Q0.70']);
+});
+test('anticipo y liquidación respetan límites y el pago total deja saldo cero', () => {
+ const upfront=makeReceipt({...sample,paymentType:'anticipo',saleTotal:'100',previousPaid:'',amount:'25'});
+ assert.equal(upfront.payment.balance,'Q75.00');
+ assert.throws(()=>makeReceipt({...sample,paymentType:'abono',saleTotal:'100',previousPaid:'80',amount:'21'}),/superan/);
+ assert.equal(makeReceipt({...sample,paymentType:'total',amount:'100'}).payment.balance,'Q0.00');
+});
+test('recibo general elimina datos de vehículo incluso con valores residuales', () => {
+ const r=makeReceipt({...sample,kind:'general',vehicle:'CARRO-NO-MOSTRAR',vin:'VIN-NO-MOSTRAR'});
+ const text=Buffer.from(pdfBytes(r)).toString('latin1');
+ assert.equal(r.vehicle,'');
+ assert.doesNotMatch(text,/DATOS DEL VEHÍCULO|CARRO-NO-MOSTRAR|VIN-NO-MOSTRAR/);
+});
+test('el PDF añade contacto solo cuando fue ingresado y permite numeración de sesión', () => {
+ const r=makeReceipt({...sample,address:'Dirección de Ejemplo',phone:'0000-0000'}); 
+ const text=Buffer.from(pdfBytes({...r,number:'DEMO-0002'})).toString('latin1');
+ assert.match(text,/Dirección de Ejemplo/); assert.match(text,/0000-0000/); assert.match(text,/DEMO-0002/);
+ assert.doesNotMatch(Buffer.from(pdfBytes(makeReceipt({...sample,address:'',phone:''}))).toString('latin1'), /Tel.:/);
+});
+test('firma dibujada es una imagen del PDF y no una certificación', () => {
+ const bytes=Uint8Array.of(255,216,255,217);
+ const r=makeReceipt(sample);
+ const text=Buffer.from(pdfBytes(r,undefined,undefined,{width:300,height:100,bytes})).toString('latin1');
+ assert.match(text,/\/Signature 7 0 R/); assert.match(text,/\/Signature Do/);
+ assert.match(text,/Firma capturada en pantalla/); assert.doesNotMatch(text,/\/Type \/Sig\b/);
+ const withLogo=Buffer.from(pdfBytes(r,{width:90,height:90,bytes},undefined,{width:300,height:100,bytes})).toString('latin1');
+ assert.match(withLogo,/\/Logo 7 0 R/); assert.match(withLogo,/\/Signature 8 0 R/);
+});
