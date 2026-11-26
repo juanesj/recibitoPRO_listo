@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sample, formatAmount, makeReceipt } from '../web-demo/receipt.mjs';
+import { sample, formatAmount, makeReceipt, pdfBytes } from '../web-demo/receipt.mjs';
 test('formatea quetzales sin perder centavos', () => assert.equal(formatAmount('1250.5'), 'Q1,250.50'));
 test('conserva campos y fecha del ejemplo', () => {
  const r = makeReceipt(sample);
@@ -28,7 +28,7 @@ test('incorpora el logo en el PDF y lo coloca con su proporción', async () => {
  const pdf = Buffer.from(pdfBytes(makeReceipt(sample),logo)).toString('latin1');
  assert.match(pdf,/\/Logo 7 0 R/);
  assert.match(pdf,/\/Width 400 \/Height 200/);
- assert.match(pdf,/100 0 0 50 \d+ \d+ cm \/Logo Do/);
+ assert.match(pdf,/112 0 0 56 \d+ \d+ cm \/Logo Do/);
  assert.match(pdf,/ffd8ffd9>/);
  assert.doesNotMatch(Buffer.from(pdfBytes(makeReceipt(sample))).toString('latin1'), /\/Logo/);
 });
@@ -55,4 +55,11 @@ test('usa el color visible en logos monocromos y devuelve null sin color', async
  assert.equal(pickBrand([250,250,250,255,8,5,7,0]),null);
  const color = pickBrand([170,30,55,255,172,31,56,255,12,40,144,255]);
  assert.ok(color[0]>color[2]);
+});
+test('recibo profesional separa el pago, el vehículo y una referencia opcional', () => {
+ const r=makeReceipt({...sample,concept:'Reserva del vehículo',reference:'PRUEBA-5'});
+ assert.equal(r.concept,'Reserva del vehículo'); assert.equal(r.reference,'PRUEBA-5');
+ const pdf=Buffer.from(pdfBytes(r,undefined,[32,78,215])).toString('latin1');
+ for(const label of ['RECIBO DE PAGO','DATOS DEL VEHÍCULO','Reserva del vehículo','PRUEBA-5']) assert.ok(pdf.includes(label));
+ assert.ok(pdf.includes('0.125 0.306 0.843 rg'));
 });
