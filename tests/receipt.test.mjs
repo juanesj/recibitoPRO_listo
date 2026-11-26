@@ -39,3 +39,20 @@ test('valida el tipo y tamaño del archivo de logo', async () => {
    assert.throws(()=>validateLogoFile(file));
  }
 });
+test('elige color del logo, evita fondo blanco y conserva contraste', async () => {
+ const { pickBrand, contrastWithWhite } = await import('../web-demo/receipt.mjs');
+ const pixels = Uint8ClampedArray.from([
+  255,255,255,255, 253,253,255,255, 2,55,220,0,
+  227,194,25,255, 227,194,25,255, 228,188,25,255
+ ]);
+ const color = pickBrand(pixels);
+ assert.ok(color[0]>color[1] && color[1]>color[2]);
+ assert.ok(contrastWithWhite(color)>=4.5);
+});
+test('usa el color visible en logos monocromos y devuelve null sin color', async () => {
+ const { pickBrand }=await import('../web-demo/receipt.mjs');
+ assert.deepEqual(pickBrand([17,17,17,255,255,255,255,255]),[17,17,17]);
+ assert.equal(pickBrand([250,250,250,255,8,5,7,0]),null);
+ const color = pickBrand([170,30,55,255,172,31,56,255,12,40,144,255]);
+ assert.ok(color[0]>color[2]);
+});
