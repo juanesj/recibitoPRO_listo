@@ -8,8 +8,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'self' data: blob:">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>Recibitos PRO Listo · Demo</title>
-  <link rel="stylesheet" href="style.css">
-  <script type="module" src="app.mjs"></script>
+  <link rel="stylesheet" href="style.css?v=recibo2">
+  <script type="module" src="app.mjs?v=recibo2"></script>
 </head>
 <body>
 <header class="top"><div class="brand"><img src="icon.svg" alt="" width="37" height="37"><strong>Recibitos PRO <span>Listo</span></strong></div><span class="badge">DEMO PÚBLICA</span></header>
@@ -37,6 +37,8 @@
         <label>Fecha<input name="date" type="date" required></label>
         <label>Monto en quetzales<input name="amount" inputmode="decimal" maxlength="10" aria-describedby="amount-hint" required><small id="amount-hint" aria-live="polite">Usa punto o coma para los centavos.</small></label>
         <label>Forma de pago<select name="method" required><option>Transferencia</option><option>Efectivo</option><option>Tarjeta</option><option>Cheque</option></select></label>
+        <label>Concepto<input name="concept" maxlength="50"></label>
+        <label>Referencia de pago<input name="reference" maxlength="50"></label>
         <label class="wide">Observaciones<textarea name="notes" rows="2" maxlength="160"></textarea></label>
         <button class="primary wide" type="submit">Generar vista previa</button>
         <p class="wide msg" id="error" role="alert" hidden></p>
@@ -44,8 +46,12 @@
     </section>
     <section id="result" class="card receipt" aria-labelledby="result-title" hidden>
       <div class="section-head"><div><p class="eyebrow">02 / VISTA PREVIA</p><h2 id="result-title" tabindex="-1">Recibo de prueba</h2></div><span class="badge" id="number"></span></div>
-      <img id="receipt-logo" class="receipt-logo" alt="Logo del negocio en el recibo" hidden><p class="amount-caption">Monto recibido</p><p class="total" id="total"></p>
-      <dl id="details"></dl>
+      <div class="receipt-heading"><div><p class="eyebrow">RECIBO DE PAGO</p><p id="merchant" class="merchant"></p><p id="date-issued" class="receipt-date"></p></div>
+        <img id="receipt-logo" class="receipt-logo" alt="Logo del negocio en el recibo" hidden></div>
+      <div class="payment-hero"><p class="amount-caption">Monto recibido · GTQ</p><p class="total" id="total"></p></div>
+      <h3 class="detail-heading">Datos del pago</h3><dl id="payment-details"></dl>
+      <h3 class="detail-heading">Datos del vehículo</h3><dl id="vehicle-details"></dl>
+      <div class="receipt-notes"><h3 class="detail-heading">Observaciones</h3><p id="receipt-notes"></p></div>
       <p class="watermark">DATOS FICTICIOS · NO VÁLIDO COMO COMPROBANTE</p>
       <button id="download" class="primary" type="button">Descargar PDF</button>
       <p id="status" class="visually-hidden" role="status"></p>
