@@ -40,3 +40,10 @@ footer{color:var(--soft);font-size:.8rem;margin:1rem 0 0}
 small{display:block;font-size:.73rem;color:var(--soft);font-weight:500;margin:.16rem 0}
 .remove{margin-top:.28rem}.receipt-logo{width:auto;max-width:145px;height:67px;object-fit:contain;margin:0 0 .55rem}
 @media(max-width:460px){.intro{padding:1rem}.logo-panel{grid-template-columns:48px minmax(0,1fr)}.logo-thumb{width:48px;height:48px}}
+body{background:var(--logo-muted,var(--bg))}
+.intro{background:var(--logo-hero,#153e34)}
+.intro .eyebrow,.intro p:last-child,.intro-tag{color:#fff}
+.badge,.quiet,.logo-panel,.logo-control input::file-selector-button{background:var(--logo-soft,#e7f2e9);border-color:var(--logo-edge,var(--edge));color:var(--brand)}
+.logo-thumb,.card,.top{border-color:var(--logo-edge,var(--edge))}
+.primary:hover{background:var(--logo-hover,#103b30)}
+:focus-visible{outline-color:var(--logo-focus,#17704d)}
