@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="Prueba Recibitos PRO con datos ficticios y descarga un recibo de demostración en PDF.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'self' data:">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'self' data: blob:">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>Recibitos PRO Listo · Demo</title>
   <link rel="stylesheet" href="style.css">
@@ -14,11 +14,20 @@
 <body>
 <header class="top"><div class="brand"><img src="icon.svg" alt="" width="37" height="37"><strong>Recibitos PRO <span>Listo</span></strong></div><span class="badge">DEMO PÚBLICA</span></header>
 <main>
-  <section class="intro"><p class="eyebrow">RECIBOS VEHICULARES</p><h1>Crea un recibo de prueba</h1>
-  <p>Prueba el flujo con el ejemplo precargado y descarga el PDF. No ingreses datos reales.</p></section>
+  <section class="intro"><span class="intro-tag">ESTUDIO DE RECIBOS</span><p class="eyebrow">RECIBOS VEHICULARES</p><h1>Crea un recibo de prueba</h1>
+  <p>Personaliza el recibo con tu logo, revisa los datos de ejemplo y descarga el PDF.</p></section>
   <div class="layout">
     <section class="card" aria-labelledby="form-title">
       <div class="section-head"><div><p class="eyebrow">01 / DATOS</p><h2 id="form-title">Datos del recibo</h2></div><button id="reset" type="button" class="quiet">Restablecer ejemplo</button></div>
+      <div class="logo-panel">
+        <div class="logo-thumb"><img id="logo-thumb" alt="Logo seleccionado" hidden><span id="logo-placeholder" aria-hidden="true">+</span></div>
+        <div class="logo-control"><label for="logo">Logo de tu negocio</label>
+          <input type="file" id="logo" accept="image/png,image/jpeg,image/webp" aria-describedby="logo-help">
+          <small id="logo-help">PNG, JPG o WebP, hasta 5 MB. La imagen no sale de tu navegador.</small>
+          <p id="logo-error" class="msg" role="alert" hidden></p>
+          <button class="quiet remove" id="logo-remove" type="button" hidden>Quitar logo</button>
+        </div>
+      </div>
       <form id="receipt-form" autocomplete="off" class="fields">
         <label>Cliente<input name="client" maxlength="50" required></label>
         <label>Vendedor<input name="seller" maxlength="50" required></label>
@@ -26,7 +35,7 @@
         <label>Placa<input name="plate" maxlength="16"></label>
         <label>VIN<input name="vin" maxlength="24"></label>
         <label>Fecha<input name="date" type="date" required></label>
-        <label>Monto en quetzales<input name="amount" inputmode="decimal" maxlength="10" required></label>
+        <label>Monto en quetzales<input name="amount" inputmode="decimal" maxlength="10" aria-describedby="amount-hint" required><small id="amount-hint" aria-live="polite">Usa punto o coma para los centavos.</small></label>
         <label>Forma de pago<select name="method" required><option>Transferencia</option><option>Efectivo</option><option>Tarjeta</option><option>Cheque</option></select></label>
         <label class="wide">Observaciones<textarea name="notes" rows="2" maxlength="160"></textarea></label>
         <button class="primary wide" type="submit">Generar vista previa</button>
@@ -35,14 +44,14 @@
     </section>
     <section id="result" class="card receipt" aria-labelledby="result-title" hidden>
       <div class="section-head"><div><p class="eyebrow">02 / VISTA PREVIA</p><h2 id="result-title" tabindex="-1">Recibo de prueba</h2></div><span class="badge" id="number"></span></div>
-      <p class="amount-caption">Monto recibido</p><p class="total" id="total"></p>
+      <img id="receipt-logo" class="receipt-logo" alt="Logo del negocio en el recibo" hidden><p class="amount-caption">Monto recibido</p><p class="total" id="total"></p>
       <dl id="details"></dl>
       <p class="watermark">DATOS FICTICIOS · NO VÁLIDO COMO COMPROBANTE</p>
       <button id="download" class="primary" type="button">Descargar PDF</button>
       <p id="status" class="visually-hidden" role="status"></p>
     </section>
   </div>
-  <footer>El recibo se genera en tu navegador. No se envía ni se guarda en un servidor.</footer>
+  <footer>Demo: usa datos ficticios. La página no guarda ni envía el logo o el recibo. El PDF descargado sí queda en tu dispositivo.</footer>
 </main>
 </body>
 </html>
