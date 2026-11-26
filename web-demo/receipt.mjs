@@ -1,11 +1,11 @@
 export const sample = Object.freeze({
   client:'María de Ejemplo', vehicle:'Toyota Corolla 2018', plate:'DEMO-01',
   vin:'FICTICIO-0001', seller:'Autos de Ejemplo', amount:'1250.50',
-  method:'Transferencia', date:'2026-11-26', notes:'Abono de demostración.'
+  method:'Transferencia', date:'2026-11-26', concept:'Reserva del vehículo', reference:'PRUEBA-001', notes:'Abono de demostración.'
 });
 export const labels = Object.freeze({
   client:'Cliente', vehicle:'Vehículo', plate:'Placa', vin:'VIN',
-  seller:'Vendedor', method:'Forma de pago', day:'Fecha', notes:'Observaciones'
+  seller:'Vendedor', method:'Forma de pago', day:'Fecha', concept:'Concepto', reference:'Referencia', notes:'Observaciones'
 });
 export function formatAmount(value) {
   const v = String(value).trim();
@@ -32,27 +32,47 @@ export function validateLogoFile(file) {
   if (!file || !types.includes(file.type)) throw new Error('Elige una imagen PNG, JPG o WebP.');
   if (!(file.size > 0 && file.size <= 5 * 1024 * 1024)) throw new Error('El logo debe pesar como máximo 5 MB.');
 }
-export function pdfBytes(r, logo) {
-  const line = (x,y,size,value,bold=false) =>
-    'BT /'+(bold?'F2':'F1')+' '+size+' Tf '+x+' '+y+' Td ('+literal(value)+') Tj ET\n';
-  let stream = '0.08 0.14 0.13 rg\n';
-  if (logo) {
-    const scale=Math.min(100/logo.width,58/logo.height);
-    const w=Math.round(scale*logo.width), h=Math.round(scale*logo.height);
-    stream+='q '+w+' 0 0 '+h+' '+(560-w)+' '+(752-h)+' cm /Logo Do Q\n';
-  }
-  stream += line(52,738,24,'Recibitos PRO',true)+line(52,709,14,'Recibo de demostración');
-  stream += line(52,677,11,r.number+'   |   '+r.day)+line(52,615,30,r.total,true);
-  stream += '0.75 0.81 0.77 RG 52 591 m 560 591 l S\n';
-  let y=562;
-  for(const k of ['client','vehicle','plate','vin','seller','method']) {
-    const value=r[k]||'No indicado';
-    stream+=line(52,y,10,labels[k],true)+line(180,y,Math.min(12,380/value.length),value); y-=32;
-  }
-  stream+=line(52,350,10,'Observaciones',true);
-  const note = r.notes || 'Sin observaciones.';
-  for(let i=0;i<note.length;i+=63) stream+=line(52,328-(i/63)*17,11,note.slice(i,i+63));
-  stream+=line(52,70,10,'DATOS FICTICIOS. NO VÁLIDO COMO COMPROBANTE.',true);
+export const defaultBrand=Object.freeze([23,62,53]);
+export function pdfBytes(r, logo, selectedColor=logo?.color) {
+  const raw=Array.isArray(selectedColor)&&selectedColor.length===3&&selectedColor.every(v=>Number.isFinite(v)&&v>=0&&v<=255)?selectedColor:defaultBrand;
+  const brand=raw.map(v=>(v/255).toFixed(3)).join(' ');
+  const ink='0.078 0.125 0.110', muted='0.278 0.333 0.318', lineColor='0.81 0.85 0.83', white='1 1 1';
+  const tint=raw.map(v=>(.95+.05*v/255).toFixed(3)).join(' ');
+  const line=(x,y,size,value,bold=false,color=ink)=>
+    color+' rg BT /'+(bold?'F2':'F1')+' '+size+' Tf '+x+' '+y+' Td ('+literal(value)+') Tj ET\n';
+  const box=(x,y,w,h,color)=>color+' rg '+[x,y,w,h].join(' ')+' re f\n';
+  const rule=(x,y,end)=>lineColor+' RG '+x+' '+y+' m '+end+' '+y+' l S\n';
+  const fit=(value,max,size)=>Math.min(size,max/Math.max(1,value.length)).toFixed(2);
+  const field=(x,y,width,label,value)=>line(x,y,8,label,true,muted)+
+    line(x,y-17,fit(value,width,11),value);
+  let stream=box(0,781,612,11,brand);
+  stream+=line(40,739,10,'RECIBO DE PAGO',true,brand);
+  stream+=line(40,708,fit(r.seller,380,25),r.seller,true);
+  stream+=line(40,680,10,'N.º '+r.number+'  |  Fecha: '+r.day,false,muted);
+  if(logo) {
+    const scale=Math.min(112/logo.width,69/logo.height);
+    const w=Math.max(1,Math.round(scale*logo.width)),h=Math.max(1,Math.round(scale*logo.height));
+    stream+='q '+w+' 0 0 '+h+' '+(572-w)+' '+(756-h)+' cm /Logo Do Q\n';
+  } else stream+=line(468,738,12,'RECIBITOS PRO',true,brand);
+  stream+=box(40,566,532,84,brand);
+  stream+=line(58,624,9,'MONTO RECIBIDO  /  GTQ',true,white);
+  stream+=line(58,587,31,r.total,true,white);
+  stream+=line(40,533,9,'DATOS DEL PAGO',true,brand)+rule(40,524,572);
+  stream+=field(40,506,255,'PAGADO POR',r.client);
+  stream+=field(320,506,252,'FORMA DE PAGO',r.method);
+  stream+=field(40,457,255,'CONCEPTO',r.concept||'No indicado');
+  stream+=field(320,457,252,'REFERENCIA',r.reference||'No indicada');
+  stream+=line(40,396,9,'DATOS DEL VEHÍCULO',true,brand)+rule(40,387,572);
+  stream+=field(40,369,255,'VEHÍCULO',r.vehicle);
+  stream+=field(320,369,90,'PLACA',r.plate||'No indicada');
+  stream+=field(420,369,152,'VIN',r.vin||'No indicado');
+  stream+=box(40,223,532,86,tint);
+  stream+=line(54,286,9,'OBSERVACIONES',true,brand);
+  const note=r.notes||'Sin observaciones.';
+  const chunks=note.match(/.{1,52}(?: |$)|.{1,52}/g)||[];
+  chunks.forEach((part,i)=>{stream+=line(54,269-i*12,9,part.trim());});
+  stream+=rule(40,86,572)+line(40,69,8,'DATOS FICTICIOS. NO VÁLIDO COMO COMPROBANTE.',true,muted);
+  stream+=line(40,54,8,'Generado con Recibitos PRO',false,muted)+line(520,54,8,'PÁG. 1 / 1',false,muted);
   const objects=[
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
